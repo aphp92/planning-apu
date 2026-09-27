@@ -321,7 +321,7 @@ table.st td:first-child{text-align:left;font-weight:bold;background:#e8e8e8}
     <textarea id="planningNote" oninput="savePlanningNote()" placeholder="Écris ici des notes pour ce mois…" style="width:100%;min-height:55px;margin-top:5px;border:1px solid #ccc;border-radius:4px;padding:6px;font-family:Arial,sans-serif;font-size:13px;resize:vertical;box-sizing:border-box"></textarea>
   </div>
   <div class="noprint" style="margin-top:16px">
-    <div style="font-weight:bold;font-size:12px;color:#155E8E;background:#eef4f8;border:1px solid #cdddea;border-radius:4px 4px 0 0;padding:7px 10px">👁️ Aperçu du mois précédent — <span id="prevMonthLabel"></span> <span style="font-weight:normal;color:#888">(lecture seule, non modifiable)</span></div>
+    <div style="font-size:18px;font-weight:bold;color:#fff;background:#3d7dbf;text-align:center;padding:7px 10px;border-radius:5px 5px 0 0;letter-spacing:1px">👁️ APERÇU DU MOIS PRÉCÉDENT — <span id="prevMonthLabel"></span> <span style="font-size:11px;font-weight:normal;opacity:.9">(lecture seule)</span></div>
     <div class="tscroll" style="border:1px solid #cdddea;border-top:none;border-radius:0 0 4px 4px"><div id="prevMonthContainer"></div></div>
   </div>
 </div>
@@ -498,7 +498,6 @@ table.st td:first-child{text-align:left;font-weight:bold;background:#e8e8e8}
     <div class="mopts" id="modalOpts"></div>
     <div class="ma">
       <button class="bcan" onclick="closeModal()">Annuler</button>
-      <button class="bok" onclick="applyModal()">OK</button>
     </div>
   </div>
 </div>
@@ -1065,7 +1064,7 @@ function render(){
   let _pMo=curMo-1, _pY=curY; if(_pMo<0){_pMo=11;_pY--;}
   const _pc=document.getElementById('prevMonthContainer');
   if(_pc) _pc.innerHTML=buildTable(_pY,_pMo,gc,'noopCell');
-  const _pl=document.getElementById('prevMonthLabel'); if(_pl) _pl.textContent=MONTHS[_pMo]+' '+_pY;
+  const _pl=document.getElementById('prevMonthLabel'); if(_pl) _pl.textContent=MONTHS[_pMo].toUpperCase()+' '+_pY;
 }
 function openCell(ag,d,code,y,mo){editCtx='planning';openModal(ag,d,code,y,mo);}
 
