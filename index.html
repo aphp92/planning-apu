@@ -626,15 +626,20 @@ function getWeTeam(y,mo,d){
 // ---- Storage ----
 let planning={}, trames={};
 let notes={};  // notes libres : clé "P<année>-<mois>" (planning) ou "T<année>-<trimestre>" (trame)
+let lastView={};  // dernière position ouverte : {pY,pMo} (planning) et {tY,tQ} (trame) — propre à chaque stockage (prod/test)
 const gc=(y,mo,ag,d)=>(planning[y]?.[mo]?.[ag]?.[d])||'';
 const gt=(y,mo,ag,d)=>(trames[y]?.[mo]?.[ag]?.[d])||'';
 function sc(y,mo,ag,d,v){
   if(!planning[y])planning[y]={};if(!planning[y][mo])planning[y][mo]={};
-  if(!planning[y][mo][ag])planning[y][mo][ag]={};planning[y][mo][ag][d]=v;save();
+  if(!planning[y][mo][ag])planning[y][mo][ag]={};planning[y][mo][ag][d]=v;
+  lastView.pY=+y; lastView.pMo=+mo;   // mémorise le dernier mois modifié
+  save();
 }
 function st(y,mo,ag,d,v){
   if(!trames[y])trames[y]={};if(!trames[y][mo])trames[y][mo]={};
-  if(!trames[y][mo][ag])trames[y][mo][ag]={};trames[y][mo][ag][d]=v;save();
+  if(!trames[y][mo][ag])trames[y][mo][ag]={};trames[y][mo][ag][d]=v;
+  lastView.tY=+y; lastView.tQ=Math.floor(mo/3);   // mémorise le dernier trimestre modifié
+  save();
 }
 // ============ JSONBIN CONFIG ============
 const MASTER_KEY = '$2a$10$m1KoDs3Yp8Bk6YWaUXqepuPEveryInfq7Mq9dwJk3cVoAVwMj8nom';
@@ -676,7 +681,8 @@ async function createBin(data){
     planning: data.planning,
     trames: data.trames,
     notes: data.notes,
-    weAnchors: data.weAnchors
+    weAnchors: data.weAnchors,
+    lastView: data.lastView
   });
   return res.metadata.id;
 }
@@ -691,7 +697,8 @@ async function updateBin(data){
     planning: data.planning,
     trames: data.trames,
     notes: data.notes,
-    weAnchors: data.weAnchors
+    weAnchors: data.weAnchors,
+    lastView: data.lastView
   });
 }
 
@@ -703,6 +710,7 @@ function save(){
     localStorage.setItem('apu_trame', JSON.stringify(trames));
     localStorage.setItem('apu_notes', JSON.stringify(notes));
     localStorage.setItem('apu_weanchors', JSON.stringify(weAnchors));
+    localStorage.setItem('apu_lastview', JSON.stringify(lastView));
   }catch(e){}
   // Debounce cloud save
   clearTimeout(saveTimer);
@@ -716,7 +724,7 @@ async function cloudSave(){
   setStatus('💾 Sauvegarde...','sync-pending');
   let ok = false;
   try{
-    const data = { planning, trames, notes, weAnchors };
+    const data = { planning, trames, notes, weAnchors, lastView };
     if(BIN_ID){
       await updateBin(data);
     } else {
@@ -745,8 +753,10 @@ async function switchBin(binId, isTest){
     trames    = (data && data.trames)   || {};
     notes     = (data && data.notes)    || {};
     weAnchors = (data && Array.isArray(data.weAnchors)) ? data.weAnchors : [];
+    lastView  = (data && data.lastView) || {};
     setStatus(isTest ? '🧪 Mode TEST' : '✅ Données à jour', isTest ? 'sync-pending' : 'sync-ok');
   }catch(e){ setStatus('⚠️ Erreur de chargement','sync-err'); }
+  applyLastView();
   render(); renderStats(); renderAnnuel(); if(trameUnlocked) renderTrame();
 }
 function updateSyncVisibility(){
@@ -764,6 +774,7 @@ async function doLoad(){
     if(t) trames   = JSON.parse(t);
     const nn = localStorage.getItem('apu_notes'); if(nn) notes = JSON.parse(nn);
     const wa = localStorage.getItem('apu_weanchors'); if(wa) weAnchors = JSON.parse(wa);
+    const lv = localStorage.getItem('apu_lastview'); if(lv) lastView = JSON.parse(lv);
   }catch(e){}
 
   // Then load from cloud (always up to date)
@@ -788,10 +799,11 @@ async function doLoad(){
       if(data && data.trames)  { trames   = data.trames;   }
       if(data && data.notes)   { notes    = data.notes;    }
       if(data && Array.isArray(data.weAnchors)){ weAnchors = data.weAnchors; }
+      if(data && data.lastView){ lastView = data.lastView; }
       // Sync local
       localStorage.setItem('apu_plan', JSON.stringify(planning));
       localStorage.setItem('apu_trame', JSON.stringify(trames));
-      try{localStorage.setItem('apu_notes',JSON.stringify(notes));localStorage.setItem('apu_weanchors',JSON.stringify(weAnchors));}catch(e){}
+      try{localStorage.setItem('apu_notes',JSON.stringify(notes));localStorage.setItem('apu_weanchors',JSON.stringify(weAnchors));localStorage.setItem('apu_lastview',JSON.stringify(lastView));}catch(e){}
       setStatus('✅ Données à jour','sync-ok');
     } catch(e){
       setStatus('⚠️ Mode hors ligne','sync-err');
@@ -888,6 +900,26 @@ function loadTrameNote(){
   if(lbl) lbl.textContent='T'+((parseInt(document.getElementById('trameQ').value)||0)+1)+' '+document.getElementById('trameYear').value;
 }
 function saveTrameNote(){ const ta=document.getElementById('trameNote'); if(!ta)return; const k=trameNoteKey(); if(ta.value.trim()===''){delete notes[k];} else {notes[k]=ta.value;} save(); }
+
+// Positionne les sélecteurs sur la dernière position modifiée (planning + trame)
+function applyLastView(){
+  try{
+    if(lastView && typeof lastView.pMo==='number'){
+      const y=lastView.pY||2026, mo=lastView.pMo;
+      if(typeof ensureYearOption==='function') ensureYearOption(y);
+      const ms=document.getElementById('monthSel'), ys=document.getElementById('yearSel');
+      if(ys && ![...ys.options].some(o=>+o.value===y)){const o=document.createElement('option');o.value=y;o.textContent=y;ys.appendChild(o);[...ys.options].sort((a,b)=>+a.value-+b.value).forEach(op=>ys.appendChild(op));}
+      if(ms) ms.value=mo; if(ys) ys.value=y;
+      curMo=mo; curY=y;
+    }
+    if(lastView && typeof lastView.tQ==='number'){
+      const ty=lastView.tY||2026, tq=lastView.tQ;
+      const tqs=document.getElementById('trameQ'), tys=document.getElementById('trameYear');
+      if(tys && ![...tys.options].some(o=>+o.value===ty)){const o=document.createElement('option');o.value=ty;o.textContent=ty;tys.appendChild(o);}
+      if(tqs) tqs.value=tq; if(tys) tys.value=ty;
+    }
+  }catch(e){}
+}
 
 // ---- Décalage des couleurs de week-end ----
 function openWeModal(){
@@ -1523,6 +1555,7 @@ async function init(){
   Object.keys(planning||{}).forEach(y=>_yrs.add(+y));
   Object.keys(trames||{}).forEach(y=>_yrs.add(+y));
   _yrs.forEach(y=>{if(y>=2000&&y<=2100)ensureYearOption(y);});
+  applyLastView();
   render();renderStats();renderAnnuel();
   // Si déjà connecté cette session : masquer la connexion et restaurer le choix
   try{
@@ -1542,8 +1575,10 @@ async function refreshFromCloud(){
     if(data && data.trames)  { trames   = data.trames;   }
     if(data && data.notes)   { notes    = data.notes;    }
     if(data && Array.isArray(data.weAnchors)){ weAnchors = data.weAnchors; }
+    if(data && data.lastView){ lastView = data.lastView; }
     localStorage.setItem('apu_plan', JSON.stringify(planning));
     localStorage.setItem('apu_trame', JSON.stringify(trames));
+    applyLastView();
     render(); renderStats(); renderAnnuel();
     if(trameUnlocked) renderTrame();
     setStatus('✅ Données à jour','sync-ok');
