@@ -313,6 +313,7 @@ table.st td:first-child{text-align:left;font-weight:bold;background:#e8e8e8}
     <span class="lc" style="background:#FFC000"></span> JS &nbsp;
     <span class="lc" style="background:#7B2D8B"></span> <span style="color:#7B2D8B;font-weight:bold">FO</span>
   </div>
+  <div id="planningTitle" class="noprint" style="font-size:21px;font-weight:bold;color:#fff;background:#155E8E;text-align:center;padding:6px 10px;border-radius:5px;margin:4px 0 10px;letter-spacing:1.5px"></div>
   <div id="printZone" style="display:none"></div>
   <div class="tscroll"><div id="planningContainer"></div></div>
   <div class="noprint" style="margin-top:10px;background:#fffef5;border:1px solid #e0d9b0;border-radius:5px;padding:8px 10px">
@@ -360,6 +361,7 @@ table.st td:first-child{text-align:left;font-weight:bold;background:#e8e8e8}
       <label style="font-size:12px;font-weight:bold">Année :</label>
       <select class="sel" id="trameYear" onchange="renderTrame()"></select>
     </div>
+    <div id="trameTitle" style="font-size:20px;font-weight:bold;color:#fff;background:#8B0000;text-align:center;padding:6px 10px;border-radius:5px;margin:4px 0 10px;letter-spacing:1px"></div>
     <div class="tscroll"><div id="trameContainer"></div></div>
     <div class="noprint" style="margin-top:10px;background:#fffef5;border:1px solid #e0d9b0;border-radius:5px;padding:8px 10px">
       <label style="font-weight:bold;font-size:12px;color:#8a7a00">📝 Notes trame — <span id="trameNoteLabel"></span></label>
@@ -952,8 +954,9 @@ function applyWeAnchor(){
   save(); render();renderStats();renderAnnuel();if(trameUnlocked)renderTrame(); renderWeAnchorsList();
   alert('✅ Couleur du week-end changée.\nTous les week-ends suivants ont été décalés automatiquement.');
 }
-function removeWeAnchor(sat){ weAnchors=weAnchors.filter(a=>a.sat!==sat); save(); render();renderStats();renderAnnuel();if(trameUnlocked)renderTrame(); renderWeAnchorsList(); }
-function resetWeAnchors(){ if(!confirm('Réinitialiser tous les décalages de couleur de week-end ?'))return; weAnchors=[]; save(); render();renderStats();renderAnnuel();if(trameUnlocked)renderTrame(); renderWeAnchorsList(); }
+function weGuard(){ const pw=prompt('🔒 Mot de passe requis :'); if(pw===null)return false; if(pw!==PLANNING_PW){alert('❌ Mot de passe incorrect');return false;} return true; }
+function removeWeAnchor(sat){ if(!weGuard())return; weAnchors=weAnchors.filter(a=>a.sat!==sat); save(); render();renderStats();renderAnnuel();if(trameUnlocked)renderTrame(); renderWeAnchorsList(); }
+function resetWeAnchors(){ if(!weGuard())return; weAnchors=[]; save(); render();renderStats();renderAnnuel();if(trameUnlocked)renderTrame(); renderWeAnchorsList(); }
 function renderWeAnchorsList(){
   const el=document.getElementById('weList'); if(!el)return;
   if(!weAnchors.length){ el.innerHTML='<i style="color:#999;font-size:12px">Aucun décalage — cycle automatique par défaut.</i>'; return; }
@@ -1035,7 +1038,7 @@ function buildTable(y,mo,getFn,clickFnStr){
       let st=(bg?`background:${bg};`:'')+'font-weight:'+fw+';';
       if(isT)st+='outline:2px solid red;outline-offset:-2px;';
       const cc=code.replace(/'/g,"\\'");
-      h+=`<td class="${wt?`we-${wt}`:''}" style="${st}" onclick="${clickFnStr}('${ag}',${d},'${cc}',${y},${mo})">${code||'&nbsp;'}</td>`;
+      h+=`<td class="${wt?`we-${wt}`:''}" style="${st}" title="${ag} · ${d} ${MONTHS[mo]}" onclick="${clickFnStr}('${ag}',${d},'${cc}',${y},${mo})">${code||'&nbsp;'}</td>`;
     }
     // Compte un WE uniquement si N le samedi ET N le dimanche
     let twe=0;for(let d=1;d<=dim;d++){const dow=new Date(y,mo,d).getDay();if(dow===6){const cSat=getFn(y,mo,ag,d);const cSun=d+1<=dim?getFn(y,mo,ag,d+1):'';if(cSat==='N'&&cSun==='N')twe++;}}
@@ -1056,6 +1059,7 @@ function render(){
   curY=parseInt(document.getElementById('yearSel').value);
   curMo=parseInt(document.getElementById('monthSel').value);
   document.getElementById('planningContainer').innerHTML=buildTable(curY,curMo,gc,'openCell');
+  const _pt=document.getElementById('planningTitle'); if(_pt) _pt.textContent=MONTHS[curMo].toUpperCase()+' '+curY;
   loadPlanningNote();
   // Aperçu du mois précédent (lecture seule)
   let _pMo=curMo-1, _pY=curY; if(_pMo<0){_pMo=11;_pY--;}
@@ -1126,6 +1130,7 @@ function renderTrame(){
     html+='<br>';
   }
   document.getElementById('trameContainer').innerHTML=html;
+  const _tt=document.getElementById('trameTitle'); if(_tt) _tt.textContent='TRAME · T'+(q+1)+' '+y+' — '+MONTHS[q*3].toUpperCase()+' / '+MONTHS[q*3+1].toUpperCase()+' / '+MONTHS[q*3+2].toUpperCase();
   loadTrameNote();
 }
 function openTrCell(ag,d,code,y,mo){editCtx='trame';openModal(ag,d,code,y,mo);}
