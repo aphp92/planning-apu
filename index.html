@@ -372,6 +372,7 @@ table.st td:first-child{text-align:left;font-weight:bold;background:#e8e8e8}
     <select class="sel" id="disposeYearSel" onchange="renderDispose()"></select>
     <button class="nb" onclick="disposeNav(1)">Suiv. ▶</button>
     <button class="nb" style="background:#1a7a40" onclick="loadDispose(true)">🔄 Actualiser Dispose</button>
+    <button class="nb" style="background:#555" onclick="updateDisposeLink()" title="Coller un nouveau lien de partage DISPOSE quand l'ancien a expiré">🔗 Changer le lien</button>
     <span style="font-size:11px;color:#1a7a40;font-weight:bold">📖 Lecture seule — source : DISPOSE (APHP)</span>
     <span id="disposeNotice" style="font-size:12px;color:#b05000;font-weight:bold"></span>
   </div>
@@ -1047,7 +1048,29 @@ function showTab(name){
 // ==================================================================
 // Connecteur (proxy Cloudflare) qui lit le fichier DISPOSE de l'APHP.
 const DISPOSE_PROXY = 'https://planning-apu-excel.bruno-somma77.workers.dev/dispose';
+const DISPOSE_SETLINK = 'https://planning-apu-excel.bruno-somma77.workers.dev/set-link';
 let dispose = {};                       // année -> mois -> agent -> jour -> code
+
+// Met à jour le lien de partage DISPOSE (quand l'ancien a expiré) via le connecteur
+async function updateDisposeLink(){
+  const link=prompt('Colle le NOUVEAU lien de partage DISPOSE\n(du type https://dispose.aphp.fr/u/… ) :');
+  if(link===null)return;
+  const l=link.trim();
+  if(!/dispose\.aphp\.fr\/u\//.test(l)){alert('❌ Ce n\'est pas un lien DISPOSE valide.\nIl doit ressembler à : https://dispose.aphp.fr/u/…');return;}
+  try{
+    setStatus('🔗 Mise à jour du lien Dispose…','sync-pending');
+    const r=await fetch(DISPOSE_SETLINK,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({secret:TRAME_PW,link:l})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||!j.ok) throw new Error(j.error||('erreur '+r.status));
+    setStatus('✅ Lien Dispose mis à jour','sync-ok');
+    alert('✅ Lien Dispose mis à jour avec succès !\nLe planning Dispose va se recharger.');
+    dispose={};
+    await loadDispose(true);
+  }catch(e){
+    setStatus('⚠️ Échec mise à jour du lien','sync-err');
+    alert('❌ Impossible de mettre à jour le lien :\n'+(e&&e.message||e)+'\n\nVérifie que le lien est correct et que le fichier existe bien.');
+  }
+}
 const gd = (y,mo,ag,d)=>(dispose[y]?.[mo]?.[ag]?.[d])||'';
 function noopCell(){}                    // cellules Dispose = non éditables
 
