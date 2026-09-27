@@ -117,7 +117,7 @@ table.st td:first-child{text-align:left;font-weight:bold;background:#e8e8e8}
 /* ============ ÉCRAN DE CHOIX (Planning / Dispose) ============ */
 #chooserGate{position:fixed;inset:0;z-index:9998;background:linear-gradient(135deg,#123f63 0%,#0d2b45 100%);display:flex;align-items:center;justify-content:center;padding:20px}
 #chooserGate.hidden{display:none}
-.chooser-wrap{text-align:center;max-width:720px;width:100%}
+.chooser-wrap{text-align:center;max-width:980px;width:100%}
 .chooser-wrap h2{color:#fff;font-size:23px;font-weight:bold;margin-bottom:4px}
 .chooser-wrap .cs{color:#a9c6dd;font-size:14px;margin-bottom:26px}
 .chooser-cards{display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
@@ -125,6 +125,8 @@ table.st td:first-child{text-align:left;font-weight:bold;background:#e8e8e8}
 .chooser-card:hover{transform:translateY(-4px)}
 .chooser-card.p:hover{border-color:#155E8E}
 .chooser-card.d:hover{border-color:#1a7a40}
+.chooser-card.tst:hover{border-color:#b05000}
+.chooser-card.tst .t{color:#b05000}
 .chooser-card .ico{font-size:54px;margin-bottom:10px;line-height:1}
 .chooser-card .t{font-size:20px;font-weight:bold;margin-bottom:8px}
 .chooser-card.p .t{color:#155E8E}
@@ -172,20 +174,20 @@ table.st td:first-child{text-align:left;font-weight:bold;background:#e8e8e8}
   *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}
   @page{size:A4 landscape;margin:5mm 4mm}
   html,body{background:#fff !important;margin:0;padding:0}
-  h1,.tabs,.ph,.legend,.modal,#tab-stats,#tab-annuel,#tab-trame,#planningContainer{display:none !important}
+  h1,.tabs,.ph,.legend,.modal,#tab-stats,#tab-annuel,#tab-trame,#planningContainer,.noprint,#testBanner{display:none !important}
   .content{padding:0 !important;min-height:0 !important}
   #tab-planning{display:block !important}
   #printZone{display:block !important}
   .pz-wrap{display:block;width:100%}
-  .pz-month{margin-bottom:5mm;page-break-inside:avoid}
-  .pz-title{font-size:8pt;font-weight:bold;text-align:center;background:#155E8E !important;color:#fff !important;padding:3pt 0;margin-bottom:1.5mm}
+  .pz-month{margin-bottom:2.5mm;page-break-inside:avoid}
+  .pz-title{font-size:7.5pt;font-weight:bold;text-align:center;background:#155E8E !important;color:#fff !important;padding:2pt 0;margin-bottom:1mm}
   table.ptable{border-collapse:collapse;font-size:6pt;width:100%;table-layout:fixed}
-  table.ptable th,table.ptable td{border:.3pt solid #999 !important;padding:0 .8pt !important;text-align:center;white-space:nowrap;overflow:hidden;height:13pt;line-height:13pt}
+  table.ptable th,table.ptable td{border:.3pt solid #999 !important;padding:0 .8pt !important;text-align:center;white-space:nowrap;overflow:hidden;height:10.5pt;line-height:10.5pt}
   table.ptable td.pname{text-align:left;font-size:6pt;font-weight:bold;width:22pt;position:static !important;padding-left:2pt !important;white-space:nowrap;overflow:hidden}
   table.ptable td.ptot{width:9pt;font-size:5pt;background:#fffacd !important}
   table.ptable td.ptot-we{display:none !important}
   table.ptable th.ptot-we{display:none !important}
-  table.ptable th{font-size:5.5pt;background:#155E8E !important;color:#fff !important;position:static !important;height:16pt;line-height:8pt}
+  table.ptable th{font-size:5.5pt;background:#155E8E !important;color:#fff !important;position:static !important;height:13pt;line-height:6.5pt}
   table.ptable tr.ptot-row td{background:#155E8E !important;color:#fff !important;font-weight:bold}
   .pteam-rose  td.pname{background:#F783F7 !important}
   .pteam-vert  td.pname{background:#92D050 !important}
@@ -258,6 +260,11 @@ table.st td:first-child{text-align:left;font-weight:bold;background:#e8e8e8}
         <div class="t">Planning Dispose</div>
         <div class="d2">Planning officiel APHP (lecture seule) :<br>stats et bilan Dispose</div>
       </div>
+      <div class="chooser-card tst" onclick="chooseMode('test')">
+        <div class="ico">🧪</div>
+        <div class="t">Test</div>
+        <div class="d2">Version d'essai (données isolées) :<br>pour tester avant la production</div>
+      </div>
     </div>
   </div>
 </div>
@@ -276,6 +283,8 @@ table.st td:first-child{text-align:left;font-weight:bold;background:#e8e8e8}
 
 <div class="content">
 
+<div id="testBanner" style="display:none;background:#b05000;color:#fff;font-weight:bold;text-align:center;padding:7px 10px;border-radius:4px;margin-bottom:10px;font-size:13px">🧪 MODE TEST — données d'essai isolées, sans aucun effet sur la production</div>
+
 <!-- PLANNING -->
 <div id="tab-planning">
   <div class="ph">
@@ -285,9 +294,11 @@ table.st td:first-child{text-align:left;font-weight:bold;background:#e8e8e8}
     <button class="nb" onclick="navigate(1)">Suiv. ▶</button>
     <button class="nb gray" onclick="goToday()">Aujourd'hui</button>
     <button class="nb red" onclick="openPrintModal()">🖨 Imprimer</button>
+    <button class="nb" style="background:#1a7a40" onclick="openExportModal('planning')">📥 Export Excel</button>
+    <button class="nb" style="background:#8a5cc0" onclick="openWeModal()">🎨 Couleur WE</button>
     <button class="nb" style="background:#155E8E" onclick="refreshFromCloud()">🔄 Actualiser</button>
-    <button class="nb" style="background:#1a7a40" onclick="syncExcel()" title="Lire / synchroniser depuis le fichier Excel">📥 Synchroniser Excel</button>
-    <button class="nb gray" style="padding:5px 8px" onclick="resetExcelFile()" title="Choisir un autre fichier Excel">📁</button>
+    <button id="syncBtn" class="nb" style="background:#1a7a40" onclick="syncExcel()" title="Lire / synchroniser depuis le fichier Excel">📥 Synchroniser Excel</button>
+    <button id="syncFolderBtn" class="nb gray" style="padding:5px 8px" onclick="resetExcelFile()" title="Choisir un autre fichier Excel">📁</button>
   </div>
   <div class="legend">
     <b>Équipes :</b>
@@ -303,6 +314,10 @@ table.st td:first-child{text-align:left;font-weight:bold;background:#e8e8e8}
   </div>
   <div id="printZone" style="display:none"></div>
   <div class="tscroll"><div id="planningContainer"></div></div>
+  <div class="noprint" style="margin-top:10px;background:#fffef5;border:1px solid #e0d9b0;border-radius:5px;padding:8px 10px">
+    <label style="font-weight:bold;font-size:12px;color:#8a7a00">📝 Notes — <span id="planningNoteLabel"></span></label>
+    <textarea id="planningNote" oninput="savePlanningNote()" placeholder="Écris ici des notes pour ce mois…" style="width:100%;min-height:55px;margin-top:5px;border:1px solid #ccc;border-radius:4px;padding:6px;font-family:Arial,sans-serif;font-size:13px;resize:vertical;box-sizing:border-box"></textarea>
+  </div>
 </div>
 
 <!-- TRAME -->
@@ -321,6 +336,7 @@ table.st td:first-child{text-align:left;font-weight:bold;background:#e8e8e8}
     <div class="ph">
       <b style="color:#155E8E">📋 Trames de planning</b>
       <div style="flex:1"></div>
+      <button class="nb" style="background:#1a7a40" onclick="openExportModal('trame')">📥 Export Excel</button>
       <button class="nb orange" onclick="doTramePrint()">🖨 Imprimer trame</button>
       <button class="nb gray" onclick="lockTrame()">🔒 Verrouiller</button>
     </div>
@@ -340,6 +356,10 @@ table.st td:first-child{text-align:left;font-weight:bold;background:#e8e8e8}
       <button class="nb" onclick="copyTrameToPlanning()" style="background:#005500">✅ Copier vers planning</button>
     </div>
     <div class="tscroll"><div id="trameContainer"></div></div>
+    <div class="noprint" style="margin-top:10px;background:#fffef5;border:1px solid #e0d9b0;border-radius:5px;padding:8px 10px">
+      <label style="font-weight:bold;font-size:12px;color:#8a7a00">📝 Notes trame — <span id="trameNoteLabel"></span></label>
+      <textarea id="trameNote" oninput="saveTrameNote()" placeholder="Écris ici des notes pour cette trame…" style="width:100%;min-height:55px;margin-top:5px;border:1px solid #ccc;border-radius:4px;padding:6px;font-family:Arial,sans-serif;font-size:13px;resize:vertical;box-sizing:border-box"></textarea>
+    </div>
   </div>
 </div>
 
@@ -413,8 +433,8 @@ table.st td:first-child{text-align:left;font-weight:bold;background:#e8e8e8}
 <!-- EXPORT MODAL -->
 <div class="modal" id="exportModal">
   <div class="mbox pmbox" style="min-width:420px">
-    <h3>&#x1F4E5; Export Excel — S&#233;lectionner les mois</h3>
-    <div style="font-size:12px;color:#555;margin-bottom:10px">Les mois s&#233;lectionn&#233;s seront export&#233;s en onglets s&#233;par&#233;s. Le fichier sera prot&#233;g&#233; en lecture seule.</div>
+    <h3 id="exportTitle">&#x1F4E5; Export Excel — S&#233;lectionner les mois</h3>
+    <div style="font-size:12px;color:#555;margin-bottom:10px">Les mois s&#233;lectionn&#233;s seront export&#233;s en onglets s&#233;par&#233;s, dans un fichier Excel <b>modifiable</b>.</div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
       <label style="font-size:12px;font-weight:bold">Ann&#233;e :</label>
       <select class="sel" id="exportYear" style="width:90px"></select>
@@ -423,12 +443,44 @@ table.st td:first-child{text-align:left;font-weight:bold;background:#e8e8e8}
     </div>
     <div id="exportMonthGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:12px"></div>
     <div style="font-size:11px;color:#666;background:#f5f5f5;padding:6px 8px;border-radius:3px;margin-bottom:10px">
-      &#x2705; Fichier Excel prot&#233;g&#233; — consultation uniquement (pas de modification possible)
+      &#x2705; Fichier Excel <b>modifiable</b> — avec les couleurs et les totaux
     </div>
     <div class="ma">
       <button class="bcan" onclick="document.getElementById('exportModal').classList.remove('open')">Annuler</button>
       <button class="bok" id="exportBtn" onclick="doExcelExport()">&#x1F4E5; G&#233;n&#233;rer le fichier</button>
     </div>
+  </div>
+</div>
+
+<!-- EDIT PASSWORD MODAL -->
+<div class="modal" id="editPwModal">
+  <div class="mbox">
+    <h3>🔒 Code requis</h3>
+    <div style="font-size:13px;color:#555;margin-bottom:10px">Entre le mot de passe pour synchroniser / importer un fichier Excel.</div>
+    <input type="password" id="editPwInput" placeholder="Mot de passe…" style="width:100%;padding:11px;font-size:15px;border:1px solid #ccc;border-radius:6px;text-align:center;margin-bottom:6px;box-sizing:border-box" onkeydown="if(event.key==='Enter')submitEditPw()">
+    <div id="editPwErr" style="color:#cc0000;font-size:12px;min-height:16px;margin-bottom:8px"></div>
+    <div class="ma">
+      <button class="bcan" onclick="document.getElementById('editPwModal').classList.remove('open')">Annuler</button>
+      <button class="bok" onclick="submitEditPw()">Déverrouiller</button>
+    </div>
+  </div>
+</div>
+
+<!-- WEEKEND COLOR MODAL -->
+<div class="modal" id="weModal">
+  <div class="mbox pmbox">
+    <h3>🎨 Décaler les couleurs de week-end</h3>
+    <div style="font-size:12px;color:#555;margin-bottom:10px">Choisis un week-end et sa nouvelle équipe. <b>Tous les week-ends suivants seront décalés</b> automatiquement dans l'ordre (jaune → vert → rose).</div>
+    <div class="pmrow"><label>Année :</label><select id="weYear" onchange="buildWeGrid()" style="flex:1"></select></div>
+    <div class="pmrow"><label>Week-end :</label><select id="weSat" style="flex:1"></select></div>
+    <div class="pmrow"><label>Équipe :</label><select id="weTeam" style="flex:1"><option value="rose">Rose</option><option value="vert">Vert</option><option value="jaune">Jaune</option></select></div>
+    <button class="bok" style="width:100%;margin-top:4px" onclick="applyWeAnchor()">✅ Appliquer le décalage</button>
+    <div style="margin-top:12px;border-top:1px solid #eee;padding-top:8px">
+      <b style="font-size:12px">Décalages actifs :</b>
+      <div id="weList" style="margin-top:5px"></div>
+      <button class="bcan" style="margin-top:8px;font-size:11px" onclick="resetWeAnchors()">↺ Tout réinitialiser</button>
+    </div>
+    <div class="ma" style="margin-top:12px"><button class="bcan" onclick="document.getElementById('weModal').classList.remove('open')">Fermer</button></div>
   </div>
 </div>
 
@@ -547,18 +599,28 @@ function isFerie(y,mo,d){
 
 // Weekend rotation: Sat Jan 3 2026 = idx 0 = vert; cycle: vert, rose, jaune
 const WE_REF=new Date(2026,0,3);
+const WE_CYCLE=['vert','rose','jaune'];  // ordre du cycle (jaune→vert→rose→jaune…)
+let weAnchors=[];  // décalages manuels : [{sat:'YYYY-MM-DD', team:'vert'}]
 function getWeTeam(y,mo,d){
   const dt=new Date(y,mo,d), dow=dt.getDay();
   let sat;
   if(dow===6) sat=dt;
   else if(dow===0) sat=new Date(y,mo,d-1);
   else return null;
-  const wk=Math.round((sat-WE_REF)/(7*864e5));
-  return ['vert','rose','jaune'][((wk%3)+3)%3];
+  // Ancre de référence + ancres manuelles ; on prend la plus récente <= ce week-end
+  let bestSat=WE_REF, bestTeam='vert';
+  for(const a of weAnchors){
+    const asat=new Date(a.sat+'T00:00:00');
+    if(asat.getTime()<=sat.getTime() && asat.getTime()>=bestSat.getTime()){ bestSat=asat; bestTeam=a.team; }
+  }
+  const wk=Math.round((sat.getTime()-bestSat.getTime())/(7*864e5));
+  const bi=WE_CYCLE.indexOf(bestTeam); const idx=bi<0?0:bi;
+  return WE_CYCLE[((idx+wk)%3+3)%3];
 }
 
 // ---- Storage ----
 let planning={}, trames={};
+let notes={};  // notes libres : clé "P<année>-<mois>" (planning) ou "T<année>-<trimestre>" (trame)
 const gc=(y,mo,ag,d)=>(planning[y]?.[mo]?.[ag]?.[d])||'';
 const gt=(y,mo,ag,d)=>(trames[y]?.[mo]?.[ag]?.[d])||'';
 function sc(y,mo,ag,d,v){
@@ -575,8 +637,11 @@ const BIN_NAME   = 'APU_NUIT_CSE';
 // Stockage cloud PARTAGÉ par TOUS les appareils (identifiant fixe).
 // Garantit qu'après une synchro Excel, les données sont les mêmes partout
 // (téléphone, autre PC…). Ne pas modifier cet identifiant.
-const SHARED_BIN_ID = '6a920394da38895dfe1df305';
+const SHARED_BIN_ID = '6a920394da38895dfe1df305';   // stockage PRODUCTION
+const TEST_BIN_ID   = '6ab91dc1ffd5d1605334823d';   // stockage TEST (isolé)
+const PROD_BIN_ID   = SHARED_BIN_ID;
 let BIN_ID       = SHARED_BIN_ID;
+let testMode     = false;
 let saveTimer    = null;
 let isSaving     = false;
 
@@ -604,7 +669,9 @@ async function createBin(data){
   const res = await jsonbinRequest('POST', '/b', {
     name: BIN_NAME,
     planning: data.planning,
-    trames: data.trames
+    trames: data.trames,
+    notes: data.notes,
+    weAnchors: data.weAnchors
   });
   return res.metadata.id;
 }
@@ -617,7 +684,9 @@ async function readBin(){
 async function updateBin(data){
   await jsonbinRequest('PUT', '/b/' + BIN_ID, {
     planning: data.planning,
-    trames: data.trames
+    trames: data.trames,
+    notes: data.notes,
+    weAnchors: data.weAnchors
   });
 }
 
@@ -627,6 +696,8 @@ function save(){
   try{
     localStorage.setItem('apu_plan', JSON.stringify(planning));
     localStorage.setItem('apu_trame', JSON.stringify(trames));
+    localStorage.setItem('apu_notes', JSON.stringify(notes));
+    localStorage.setItem('apu_weanchors', JSON.stringify(weAnchors));
   }catch(e){}
   // Debounce cloud save
   clearTimeout(saveTimer);
@@ -640,7 +711,7 @@ async function cloudSave(){
   setStatus('💾 Sauvegarde...','sync-pending');
   let ok = false;
   try{
-    const data = { planning, trames };
+    const data = { planning, trames, notes, weAnchors };
     if(BIN_ID){
       await updateBin(data);
     } else {
@@ -657,6 +728,27 @@ async function cloudSave(){
   return ok;
 }
 
+// Bascule entre le stockage PRODUCTION et le stockage TEST (données isolées)
+async function switchBin(binId, isTest){
+  clearTimeout(saveTimer);      // annuler toute sauvegarde en attente (évite d'écrire dans le mauvais stockage)
+  BIN_ID = binId; testMode = !!isTest;
+  try{
+    setStatus('🔄 Chargement…','sync-pending');
+    const data = await readBin();
+    planning  = (data && data.planning) || {};
+    trames    = (data && data.trames)   || {};
+    notes     = (data && data.notes)    || {};
+    weAnchors = (data && Array.isArray(data.weAnchors)) ? data.weAnchors : [];
+    setStatus(isTest ? '🧪 Mode TEST' : '✅ Données à jour', isTest ? 'sync-pending' : 'sync-ok');
+  }catch(e){ setStatus('⚠️ Erreur de chargement','sync-err'); }
+  render(); renderStats(); renderAnnuel(); if(trameUnlocked) renderTrame();
+}
+function updateSyncVisibility(){
+  const show = !testMode;
+  ['syncBtn','syncFolderBtn'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=show?'':'none';});
+}
+function updateTestBanner(){ const b=document.getElementById('testBanner'); if(b) b.style.display=testMode?'':'none'; }
+
 async function doLoad(){
   // Try local first for speed
   try{
@@ -664,6 +756,8 @@ async function doLoad(){
     const t = localStorage.getItem('apu_trame');
     if(p) planning = JSON.parse(p);
     if(t) trames   = JSON.parse(t);
+    const nn = localStorage.getItem('apu_notes'); if(nn) notes = JSON.parse(nn);
+    const wa = localStorage.getItem('apu_weanchors'); if(wa) weAnchors = JSON.parse(wa);
   }catch(e){}
 
   // Then load from cloud (always up to date)
@@ -686,9 +780,12 @@ async function doLoad(){
       const data = await readBin();
       if(data && data.planning){ planning = data.planning; }
       if(data && data.trames)  { trames   = data.trames;   }
+      if(data && data.notes)   { notes    = data.notes;    }
+      if(data && Array.isArray(data.weAnchors)){ weAnchors = data.weAnchors; }
       // Sync local
       localStorage.setItem('apu_plan', JSON.stringify(planning));
       localStorage.setItem('apu_trame', JSON.stringify(trames));
+      try{localStorage.setItem('apu_notes',JSON.stringify(notes));localStorage.setItem('apu_weanchors',JSON.stringify(weAnchors));}catch(e){}
       setStatus('✅ Données à jour','sync-ok');
     } catch(e){
       setStatus('⚠️ Mode hors ligne','sync-err');
@@ -744,6 +841,88 @@ function preload(){
 
 // ---- State ----
 let curY=2026, curMo=0, modalCb=null, modalSel='', editCtx='planning', trameUnlocked=false;
+
+// ---- Notes (planning & trame) ----
+function planningNoteKey(){ return 'P'+(parseInt(document.getElementById('yearSel').value)||curY)+'-'+(parseInt(document.getElementById('monthSel').value)||curMo); }
+function loadPlanningNote(){
+  const ta=document.getElementById('planningNote'); if(!ta)return;
+  ta.value=notes[planningNoteKey()]||'';
+  const lbl=document.getElementById('planningNoteLabel');
+  if(lbl) lbl.textContent=(MONTHS[parseInt(document.getElementById('monthSel').value)||0])+' '+document.getElementById('yearSel').value;
+}
+function savePlanningNote(){ const ta=document.getElementById('planningNote'); if(!ta)return; const k=planningNoteKey(); if(ta.value.trim()===''){delete notes[k];} else {notes[k]=ta.value;} save(); }
+function trameNoteKey(){ return 'T'+(parseInt(document.getElementById('trameYear').value)||2026)+'-'+(parseInt(document.getElementById('trameQ').value)||0); }
+function loadTrameNote(){
+  const ta=document.getElementById('trameNote'); if(!ta)return;
+  ta.value=notes[trameNoteKey()]||'';
+  const lbl=document.getElementById('trameNoteLabel');
+  if(lbl) lbl.textContent='T'+((parseInt(document.getElementById('trameQ').value)||0)+1)+' '+document.getElementById('trameYear').value;
+}
+function saveTrameNote(){ const ta=document.getElementById('trameNote'); if(!ta)return; const k=trameNoteKey(); if(ta.value.trim()===''){delete notes[k];} else {notes[k]=ta.value;} save(); }
+
+// ---- Décalage des couleurs de week-end ----
+function openWeModal(){
+  const y=parseInt(document.getElementById('yearSel').value)||curY;
+  const wy=document.getElementById('weYear'); if(wy){ if(![...wy.options].some(o=>+o.value===y)){const o=document.createElement('option');o.value=y;o.textContent=y;wy.appendChild(o);} wy.value=y; }
+  buildWeGrid(); renderWeAnchorsList();
+  document.getElementById('weModal').classList.add('open');
+}
+function buildWeGrid(){
+  const y=parseInt(document.getElementById('weYear').value)||curY;
+  const sel=document.getElementById('weSat'); if(!sel)return; sel.innerHTML='';
+  for(let mo=0;mo<12;mo++){
+    const dim=new Date(y,mo+1,0).getDate();
+    for(let d=1;d<=dim;d++){
+      if(new Date(y,mo,d).getDay()===6){
+        const o=document.createElement('option');
+        o.value=y+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+        o.textContent='Sam '+d+' '+MONTHS[mo]+' '+y;
+        sel.appendChild(o);
+      }
+    }
+  }
+}
+function applyWeAnchor(){
+  const sat=document.getElementById('weSat').value, team=document.getElementById('weTeam').value;
+  if(!sat||!team)return;
+  weAnchors=weAnchors.filter(a=>a.sat!==sat);
+  weAnchors.push({sat,team});
+  weAnchors.sort((a,b)=>a.sat<b.sat?-1:1);
+  save(); render();renderStats();renderAnnuel();if(trameUnlocked)renderTrame(); renderWeAnchorsList();
+  alert('✅ Couleur du week-end changée.\nTous les week-ends suivants ont été décalés automatiquement.');
+}
+function removeWeAnchor(sat){ weAnchors=weAnchors.filter(a=>a.sat!==sat); save(); render();renderStats();renderAnnuel();if(trameUnlocked)renderTrame(); renderWeAnchorsList(); }
+function resetWeAnchors(){ if(!confirm('Réinitialiser tous les décalages de couleur de week-end ?'))return; weAnchors=[]; save(); render();renderStats();renderAnnuel();if(trameUnlocked)renderTrame(); renderWeAnchorsList(); }
+function renderWeAnchorsList(){
+  const el=document.getElementById('weList'); if(!el)return;
+  if(!weAnchors.length){ el.innerHTML='<i style="color:#999;font-size:12px">Aucun décalage — cycle automatique par défaut.</i>'; return; }
+  el.innerHTML=weAnchors.map(a=>{
+    const p=a.sat.split('-'); const col=a.team==='rose'?'#F783F7':a.team==='vert'?'#92D050':'#FFFF00';
+    return '<div style="display:flex;align-items:center;gap:6px;font-size:12px;padding:2px 0"><span class="lc" style="background:'+col+'"></span> dès le '+p[2]+'/'+p[1]+'/'+p[0]+' → <b>'+a.team+'</b> <button class="bcan" style="padding:0 7px;font-size:11px" onclick="removeWeAnchor(\''+a.sat+'\')">✕</button></div>';
+  }).join('');
+}
+
+// ---- Verrouillage de l'édition (Synchroniser / Importer Excel) ----
+let _pendingEditAction=null;
+function requireEditPw(action){
+  if(syncUnlocked){ action(); return; }
+  _pendingEditAction=action;
+  document.getElementById('editPwInput').value='';
+  document.getElementById('editPwErr').textContent='';
+  document.getElementById('editPwModal').classList.add('open');
+  setTimeout(function(){document.getElementById('editPwInput').focus();},50);
+}
+function submitEditPw(){
+  if(document.getElementById('editPwInput').value===TRAME_PW){
+    syncUnlocked=true;
+    document.getElementById('editPwModal').classList.remove('open');
+    const a=_pendingEditAction; _pendingEditAction=null;
+    if(a) a();   // exécuté dans le clic « Déverrouiller » -> le geste est conservé pour le sélecteur de fichier
+  } else {
+    document.getElementById('editPwErr').textContent='❌ Code incorrect';
+    const i=document.getElementById('editPwInput'); i.value=''; i.focus();
+  }
+}
 
 // ---- Navigation ----
 function navigate(dir){
@@ -816,6 +995,7 @@ function render(){
   curY=parseInt(document.getElementById('yearSel').value);
   curMo=parseInt(document.getElementById('monthSel').value);
   document.getElementById('planningContainer').innerHTML=buildTable(curY,curMo,gc,'openCell');
+  loadPlanningNote();
 }
 function openCell(ag,d,code,y,mo){editCtx='planning';openModal(ag,d,code,y,mo);}
 
@@ -828,7 +1008,7 @@ function openModal(ag,d,code,y,mo){
     const b=document.createElement('button');
     b.className='ob'+(c===code?' sel':'');
     b.style.background=info.bg;b.style.color=info.fg;b.textContent=info.label;
-    b.onclick=()=>{document.querySelectorAll('.ob').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');modalSel=c;};
+    b.onclick=()=>{modalSel=c;applyModal();};
     opts.appendChild(b);
   });
   document.getElementById('modal').classList.add('open');
@@ -878,6 +1058,7 @@ function renderTrame(){
     html+='<br>';
   }
   document.getElementById('trameContainer').innerHTML=html;
+  loadTrameNote();
 }
 function openTrCell(ag,d,code,y,mo){editCtx='trame';openModal(ag,d,code,y,mo);}
 function copyTrameToPlanning(){
@@ -1227,9 +1408,11 @@ function renderAnnuelDispose(){
 }
 
 // ---- Page d'accueil / connexion + choix du planning ----
-const TAB_GROUPS={planning:['planning','trame','stats','annuel'],dispose:['dispose','statsdispose','annueldispose']};
+const TAB_GROUPS={planning:['planning','trame','stats','annuel'],dispose:['dispose','statsdispose','annueldispose'],test:['planning','trame','stats','annuel']};
 let currentMode=null;
 const ALL_TABS=['planning','trame','stats','annuel','dispose','statsdispose','annueldispose'];
+const PLANNING_PW='SyTpc60*';   // mot de passe pour accéder au Planning (production)
+let planningUnlocked=false; try{planningUnlocked=sessionStorage.getItem('apu_planning_ok')==='1';}catch(e){}
 
 function applyModeTabs(mode){
   currentMode=mode;
@@ -1238,8 +1421,19 @@ function applyModeTabs(mode){
   showTab(group[0]);
 }
 function chooseMode(mode){
+  // Le Planning (production) est protégé par mot de passe
+  if(mode==='planning' && !planningUnlocked){
+    const pw=prompt('🔒 Mot de passe pour accéder au Planning :');
+    if(pw===null) return;
+    if(pw!==PLANNING_PW){ alert('❌ Mot de passe incorrect'); return; }
+    planningUnlocked=true; try{sessionStorage.setItem('apu_planning_ok','1');}catch(e){}
+  }
   try{sessionStorage.setItem('apu_mode',mode);}catch(e){}
   document.getElementById('chooserGate').classList.add('hidden');
+  if(mode==='planning'){ switchBin(PROD_BIN_ID,false); }
+  else if(mode==='test'){ switchBin(TEST_BIN_ID,true); }
+  else { testMode=false; }   // dispose : stockage inchangé
+  updateSyncVisibility(); updateTestBanner();
   applyModeTabs(mode);
 }
 function backToChooser(){
@@ -1248,8 +1442,15 @@ function backToChooser(){
 }
 function openAfterLogin(){
   let m=null; try{m=sessionStorage.getItem('apu_mode');}catch(e){}
-  if(m&&TAB_GROUPS[m]){ document.getElementById('chooserGate').classList.add('hidden'); applyModeTabs(m); }
-  else document.getElementById('chooserGate').classList.remove('hidden');
+  if(m&&TAB_GROUPS[m]){
+    document.getElementById('chooserGate').classList.add('hidden');
+    if(m==='test'){ switchBin(TEST_BIN_ID,true); }
+    else if(m==='planning'){ switchBin(PROD_BIN_ID,false); }
+    updateSyncVisibility(); updateTestBanner();
+    applyModeTabs(m);
+  } else {
+    document.getElementById('chooserGate').classList.remove('hidden');
+  }
 }
 function doLogin(){
   const v=document.getElementById('loginPw').value;
@@ -1269,7 +1470,7 @@ async function init(){
   const years=[];for(let y=2026;y<=2030;y++)years.push(y);
   function fy(id){const s=document.getElementById(id);years.forEach(y=>{const o=document.createElement('option');o.value=y;o.textContent=y;if(y===2026)o.selected=true;s.appendChild(o);});}
   function fm(id,sel=0){const s=document.getElementById(id);MONTHS.forEach((m,i)=>{const o=document.createElement('option');o.value=i;o.textContent=m;if(i===sel)o.selected=true;s.appendChild(o);});}
-  fy('yearSel');fy('statsYear');fy('annuelYear');fy('trameYear');fy('exportYear');
+  fy('yearSel');fy('statsYear');fy('annuelYear');fy('trameYear');fy('exportYear');fy('weYear');
   fm('monthSel',0);
   ['pm1m','pm2m','pm3m'].forEach(id=>fm(id,0));
   ['pm1y','pm2y','pm3y'].forEach(id=>fy(id));
@@ -1302,6 +1503,8 @@ async function refreshFromCloud(){
     const data = await readBin();
     if(data && data.planning){ planning = data.planning; }
     if(data && data.trames)  { trames   = data.trames;   }
+    if(data && data.notes)   { notes    = data.notes;    }
+    if(data && Array.isArray(data.weAnchors)){ weAnchors = data.weAnchors; }
     localStorage.setItem('apu_plan', JSON.stringify(planning));
     localStorage.setItem('apu_trame', JSON.stringify(trames));
     render(); renderStats(); renderAnnuel();
@@ -1313,12 +1516,21 @@ async function refreshFromCloud(){
 }
 
 // ---- Export Excel ----
-function openExportModal(){
-  const year = parseInt(document.getElementById('statsYear').value)||2026;
+let exportMode='planning';
+function openExportModal(mode){
+  exportMode = (mode==='trame')?'trame':'planning';
+  const tl=document.getElementById('exportTitle');
+  if(tl) tl.textContent='📥 Export '+(exportMode==='trame'?'des Trames':'du Planning')+' — Sélectionner les mois';
+  const srcSel = exportMode==='trame' ? 'trameYear' : 'yearSel';
+  const year = parseInt((document.getElementById(srcSel)||{}).value) || parseInt((document.getElementById('statsYear')||{}).value) || 2026;
   const ey = document.getElementById('exportYear');
-  // Populate year if empty
   if(!ey.options.length){
     for(let y=2026;y<=2030;y++){const o=document.createElement('option');o.value=y;o.textContent=y;if(y===2026)o.selected=true;ey.appendChild(o);}
+  }
+  // s'assurer que l'année voulue est disponible dans le menu
+  if(![...ey.options].some(o=>+o.value===year)){
+    const o=document.createElement('option');o.value=year;o.textContent=year;ey.appendChild(o);
+    [...ey.options].sort((a,b)=>+a.value-+b.value).forEach(op=>ey.appendChild(op));
   }
   ey.value = year;
   buildExportMonthGrid();
@@ -1342,6 +1554,7 @@ async function doExcelExport(){
   document.querySelectorAll('#exportMonthGrid input[type=checkbox]:checked').forEach(c=>selMonths.push(parseInt(c.value)));
   if(!selMonths.length){alert('Veuillez sélectionner au moins un mois.');return;}
   const year=parseInt(document.getElementById('exportYear').value)||2026;
+  const G = exportMode==='trame' ? gt : gc;   // lit le planning OU les trames
   const btn=document.getElementById('exportBtn');
   btn.textContent='⏳ Génération...';btn.disabled=true;
 
@@ -1385,20 +1598,22 @@ async function doExcelExport(){
     }
 
     selMonths.sort((a,b)=>a-b);
-    selMonths.forEach(mo=>{
-      const ws=wb.addWorksheet(MONTHS[mo]+' '+year,{views:[{showGridLines:true}]});
-      // Freeze panes: freeze first col
-      ws.views=[{state:'frozen',xSplit:1,ySplit:1,topLeftCell:'B2',activeCell:'B2'}];
-
+    // >>> UNE SEULE FEUILLE : tous les mois sélectionnés empilés verticalement <<<
+    const ws=wb.addWorksheet((exportMode==='trame'?'Trames ':'Planning ')+year,{views:[{state:'frozen',xSplit:1,ySplit:0}]});
+    let maxCols=8;
+    selMonths.forEach((mo,idx)=>{
+      if(idx>0){ ws.addRow([]); ws.addRow([]); }   // 2 lignes vides entre chaque mois
       const dim=new Date(year,mo+1,0).getDate();
+      maxCols=Math.max(maxCols,dim+4);
       const weMap={};
       for(let d=1;d<=dim;d++){const dow=new Date(year,mo,d).getDay();weMap[d]=(dow===0||dow===6)?getWeTeam(year,mo,d):null;}
 
       // Title row (merged)
       const titleRow=ws.addRow([]);
-      ws.mergeCells(1,1,1,dim+3);
-      const titleCell=ws.getCell(1,1);
-      titleCell.value='Planning APU — Service de Nuit — '+MONTHS[mo]+' '+year;
+      const tr=titleRow.number;
+      ws.mergeCells(tr,1,tr,dim+4);
+      const titleCell=ws.getCell(tr,1);
+      titleCell.value=(exportMode==='trame'?'TRAME — APU Nuit — ':'Planning APU — Service de Nuit — ')+MONTHS[mo]+' '+year;
       titleCell.font={bold:true,size:12,name:'Arial',color:{argb:HEADER_FG}};
       titleCell.fill={type:'pattern',pattern:'solid',fgColor:{argb:HEADER_BG}};
       titleCell.alignment={horizontal:'center',vertical:'middle'};
@@ -1436,13 +1651,13 @@ async function doExcelExport(){
         const rowVals=[ag];
         const rowCodes=[];
         for(let d=1;d<=dim;d++){
-          const code=gc(year,mo,ag,d);
+          const code=G(year,mo,ag,d);
           rowVals.push(code||'');
           rowCodes.push(code);
           if(code==='N'){tn++;const dow=new Date(year,mo,d).getDay();if(dow===5)tv++;}
         }
         // WE = samedi N ET dimanche N
-        for(let d=1;d<=dim;d++){const dow=new Date(year,mo,d).getDay();if(dow===6){const cSat=gc(year,mo,ag,d);const cSun=d+1<=dim?gc(year,mo,ag,d+1):'';if(cSat==='N'&&cSun==='N')twe++;}}
+        for(let d=1;d<=dim;d++){const dow=new Date(year,mo,d).getDay();if(dow===6){const cSat=G(year,mo,ag,d);const cSun=d+1<=dim?G(year,mo,ag,d+1):'';if(cSat==='N'&&cSun==='N')twe++;}}
         rowVals.push(tn||'',twe||'',tv||'');
         const row=ws.addRow(rowVals);
         row.height=18;
@@ -1486,7 +1701,7 @@ async function doExcelExport(){
 
       // Total row
       const totVals=['TOTAL'];
-      for(let d=1;d<=dim;d++){let c=0;AGENTS.forEach(ag=>{if(gc(year,mo,ag,d)==='N')c++;});totVals.push(c||'');}
+      for(let d=1;d<=dim;d++){let c=0;AGENTS.forEach(ag=>{if(G(year,mo,ag,d)==='N')c++;});totVals.push(c||'');}
       totVals.push('','','');
       const totRow=ws.addRow(totVals);
       totRow.height=18;
@@ -1501,21 +1716,11 @@ async function doExcelExport(){
         cell.border={top:{style:'thin'},bottom:{style:'thin'},left:{style:'thin'},right:{style:'thin'}};
       }
 
-      // Column widths
-      ws.getColumn(1).width=14;
-      for(let d=1;d<=dim;d++)ws.getColumn(d+1).width=4.2;
-      ws.getColumn(dim+2).width=5;
-      ws.getColumn(dim+3).width=5;
-      ws.getColumn(dim+4).width=5;
-
-      // Protect sheet (read-only)
-      ws.protect('APU2026readonly',{
-        selectLockedCells:true,selectUnlockedCells:false,
-        formatCells:false,formatColumns:false,formatRows:false,
-        insertColumns:false,insertRows:false,deleteColumns:false,deleteRows:false,
-        sort:false,autoFilter:false,pivotTables:false
-      });
+      // (fichier exporté MODIFIABLE — pas de protection)
     });
+    // Largeurs de colonnes (une seule fois pour toute la feuille)
+    ws.getColumn(1).width=14;
+    for(let c=2;c<=maxCols;c++) ws.getColumn(c).width=4.6;
 
     // Generate and download
     const buf=await wb.xlsx.writeBuffer();
@@ -1523,7 +1728,7 @@ async function doExcelExport(){
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
     a.href=url;
-    a.download=`Planning_APU_${year}_${selMonths.map(m=>MONTHS[m].substring(0,3)).join('-')}.xlsx`;
+    a.download=`${exportMode==='trame'?'Trame':'Planning'}_APU_${year}_${selMonths.map(m=>MONTHS[m].substring(0,3)).join('-')}.xlsx`;
     document.body.appendChild(a);a.click();document.body.removeChild(a);
     URL.revokeObjectURL(url);
     document.getElementById('exportModal').classList.remove('open');
@@ -1662,9 +1867,10 @@ function pickFileClassic(){
 // Au chargement, on récupère la poignée fichier mémorisée (pour re-synchro en 1 clic, sans re-choisir)
 try{ idbGet('excelHandle').then(function(h){ if(h && !excelFileHandle) excelFileHandle=h; }); }catch(e){}
 
-function resetExcelFile(){excelFileHandle=null;try{idbSet('excelHandle',null);}catch(e){}syncExcel();}
+function resetExcelFile(){ requireEditPw(function(){ excelFileHandle=null;try{idbSet('excelHandle',null);}catch(e){} doSyncCore(); }); }
+function syncExcel(){ requireEditPw(doSyncCore); }
 
-async function syncExcel(){
+async function doSyncCore(){
   try{
     // 1) Obtenir le fichier — DOIT rester dans le geste du clic (aucun prompt/await avant le sélecteur)
     let buf=null;
@@ -1683,14 +1889,7 @@ async function syncExcel(){
         buf=await pickFileClassic();
       }
     }
-    // 2) Mot de passe APRÈS avoir le fichier (le sélecteur a déjà eu son geste utilisateur)
-    if(!syncUnlocked){
-      const pw=prompt('🔒 Code pour valider la synchronisation :');
-      if(pw===null){setStatus('','');return;}
-      if(pw!==TRAME_PW){alert('❌ Code incorrect');setStatus('','');return;}
-      syncUnlocked=true;
-    }
-    // 3) Analyse + application
+    // 2) Analyse + application (le code a déjà été validé avant l'ouverture du sélecteur)
     await loadXLSX();
     setStatus('⚙️ Analyse du planning…','sync-pending');
     const {outP,outT,stats}=parseWorkbook(buf);
@@ -1715,7 +1914,7 @@ async function syncExcel(){
   }
 }
 
-['modal','printModal','exportModal'].forEach(id=>{
+['modal','printModal','exportModal','weModal','editPwModal'].forEach(id=>{
   document.getElementById(id).addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
 });
 
