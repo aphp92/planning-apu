@@ -1409,6 +1409,11 @@ async function loadDispose(force){
     if(cells===0) throw new Error('aucune donnée reconnue dans le fichier');
     dispose=out;
     const yrs=new Set();Object.keys(dispose).forEach(y=>yrs.add(+y));[...yrs].sort((a,b)=>a-b).forEach(y=>ensureDisposeYearOption(y));
+    if(!force){   // à l'ouverture : se positionner sur le DERNIER mois qui contient des données
+      let bY=-1,bM=-1;
+      for(const y in dispose){const yi=+y;for(const mo in dispose[y]){const mi=+mo;let has=false;const md=dispose[y][mo];for(const ag in md){if(md[ag]&&Object.keys(md[ag]).length){has=true;break;}}if(has&&(yi>bY||(yi===bY&&mi>bM))){bY=yi;bM=mi;}}}
+      if(bY>0){ensureDisposeYearOption(bY);const ys=document.getElementById('disposeYearSel'),ms=document.getElementById('disposeMonthSel');if(ys)ys.value=bY;if(ms)ms.value=bM;}
+    }
     renderDispose();renderStatsDispose();renderAnnuelDispose();
     if(force) alert('✅ Planning Dispose actualisé\n\n'+cells+' cases lues depuis le lien APHP.');
   }catch(e){
