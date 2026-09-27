@@ -293,6 +293,7 @@ table.st td:first-child{text-align:left;font-weight:bold;background:#e8e8e8}
     <select class="sel" id="yearSel" onchange="render()"></select>
     <button class="nb" onclick="navigate(1)">Suiv. ▶</button>
     <button class="nb gray" onclick="goToday()">Aujourd'hui</button>
+    <button class="nb" style="background:#8B0000" onclick="undoLast()" title="Annuler la dernière modification (Ctrl+Z)">↩ Annuler</button>
     <button class="nb red" onclick="openPrintModal()">🖨 Imprimer</button>
     <button class="nb" style="background:#1a7a40" onclick="openExportModal('planning')">📥 Export Excel</button>
     <button class="nb" style="background:#8a5cc0" onclick="openWeModal()">🎨 Couleur WE</button>
@@ -318,6 +319,10 @@ table.st td:first-child{text-align:left;font-weight:bold;background:#e8e8e8}
     <label style="font-weight:bold;font-size:12px;color:#8a7a00">📝 Notes — <span id="planningNoteLabel"></span></label>
     <textarea id="planningNote" oninput="savePlanningNote()" placeholder="Écris ici des notes pour ce mois…" style="width:100%;min-height:55px;margin-top:5px;border:1px solid #ccc;border-radius:4px;padding:6px;font-family:Arial,sans-serif;font-size:13px;resize:vertical;box-sizing:border-box"></textarea>
   </div>
+  <div class="noprint" style="margin-top:16px">
+    <div style="font-weight:bold;font-size:12px;color:#155E8E;background:#eef4f8;border:1px solid #cdddea;border-radius:4px 4px 0 0;padding:7px 10px">👁️ Aperçu du mois précédent — <span id="prevMonthLabel"></span> <span style="font-weight:normal;color:#888">(lecture seule, non modifiable)</span></div>
+    <div class="tscroll" style="border:1px solid #cdddea;border-top:none;border-radius:0 0 4px 4px"><div id="prevMonthContainer"></div></div>
+  </div>
 </div>
 
 <!-- TRAME -->
@@ -336,6 +341,7 @@ table.st td:first-child{text-align:left;font-weight:bold;background:#e8e8e8}
     <div class="ph">
       <b style="color:#155E8E">📋 Trames de planning</b>
       <div style="flex:1"></div>
+      <button class="nb" style="background:#8B0000" onclick="undoLast()" title="Annuler la dernière modification (Ctrl+Z)">↩ Annuler</button>
       <button class="nb" style="background:#1a7a40" onclick="openExportModal('trame')">📥 Export Excel</button>
       <button class="nb orange" onclick="doTramePrint()">🖨 Imprimer trame</button>
       <button class="nb gray" onclick="lockTrame()">🔒 Verrouiller</button>
@@ -353,7 +359,6 @@ table.st td:first-child{text-align:left;font-weight:bold;background:#e8e8e8}
       </select>
       <label style="font-size:12px;font-weight:bold">Année :</label>
       <select class="sel" id="trameYear" onchange="renderTrame()"></select>
-      <button class="nb" onclick="copyTrameToPlanning()" style="background:#005500">✅ Copier vers planning</button>
     </div>
     <div class="tscroll"><div id="trameContainer"></div></div>
     <div class="noprint" style="margin-top:10px;background:#fffef5;border:1px solid #e0d9b0;border-radius:5px;padding:8px 10px">
@@ -731,6 +736,7 @@ async function cloudSave(){
 // Bascule entre le stockage PRODUCTION et le stockage TEST (données isolées)
 async function switchBin(binId, isTest){
   clearTimeout(saveTimer);      // annuler toute sauvegarde en attente (évite d'écrire dans le mauvais stockage)
+  undoStack=[];                 // l'historique d'annulation ne traverse pas prod/test
   BIN_ID = binId; testMode = !!isTest;
   try{
     setStatus('🔄 Chargement…','sync-pending');
@@ -841,6 +847,29 @@ function preload(){
 
 // ---- State ----
 let curY=2026, curMo=0, modalCb=null, modalSel='', editCtx='planning', trameUnlocked=false;
+
+// ---- Annuler (retour arrière) ----
+let undoStack=[];
+function pushUndo(){
+  try{ undoStack.push({p:JSON.stringify(planning), t:JSON.stringify(trames)}); }catch(e){}
+  if(undoStack.length>50) undoStack.shift();
+}
+function undoLast(){
+  if(!undoStack.length){ setStatus('Rien à annuler','sync-pending'); return; }
+  const s=undoStack.pop();
+  try{ planning=JSON.parse(s.p); trames=JSON.parse(s.t); }catch(e){ return; }
+  save();
+  render(); renderStats(); renderAnnuel(); if(trameUnlocked) renderTrame();
+  setStatus('↩ Modification annulée','sync-ok');
+}
+// Ctrl+Z (sauf dans les champs texte, où on laisse l'annulation de texte normale)
+document.addEventListener('keydown',function(e){
+  if((e.ctrlKey||e.metaKey) && (e.key==='z'||e.key==='Z')){
+    const ae=document.activeElement;
+    if(ae && (ae.tagName==='TEXTAREA'||ae.tagName==='INPUT')) return;
+    e.preventDefault(); undoLast();
+  }
+});
 
 // ---- Notes (planning & trame) ----
 function planningNoteKey(){ return 'P'+(parseInt(document.getElementById('yearSel').value)||curY)+'-'+(parseInt(document.getElementById('monthSel').value)||curMo); }
@@ -996,6 +1025,11 @@ function render(){
   curMo=parseInt(document.getElementById('monthSel').value);
   document.getElementById('planningContainer').innerHTML=buildTable(curY,curMo,gc,'openCell');
   loadPlanningNote();
+  // Aperçu du mois précédent (lecture seule)
+  let _pMo=curMo-1, _pY=curY; if(_pMo<0){_pMo=11;_pY--;}
+  const _pc=document.getElementById('prevMonthContainer');
+  if(_pc) _pc.innerHTML=buildTable(_pY,_pMo,gc,'noopCell');
+  const _pl=document.getElementById('prevMonthLabel'); if(_pl) _pl.textContent=MONTHS[_pMo]+' '+_pY;
 }
 function openCell(ag,d,code,y,mo){editCtx='planning';openModal(ag,d,code,y,mo);}
 
@@ -1017,6 +1051,8 @@ function closeModal(){document.getElementById('modal').classList.remove('open');
 function applyModal(){
   if(modalCb){
     const{ag,d,y,mo}=modalCb;
+    const cur = editCtx==='trame'?gt(y,mo,ag,d):gc(y,mo,ag,d);
+    if(cur!==modalSel) pushUndo();   // point de retour avant la modif
     if(editCtx==='trame')st(y,mo,ag,d,modalSel);
     else sc(y,mo,ag,d,modalSel);
     if(editCtx==='trame')renderTrame();
@@ -1065,6 +1101,7 @@ function copyTrameToPlanning(){
   const y=parseInt(document.getElementById('trameYear').value)||2026;
   const q=parseInt(document.getElementById('trameQ').value)||0;
   if(!confirm(`Copier la trame T${q+1} ${y} vers le planning ? Les données du planning pour ces 3 mois seront remplacées.`))return;
+  pushUndo();   // point de retour avant la copie
   for(let i=0;i<3;i++){
     const mo=q*3+i;
     if(!planning[y])planning[y]={};
